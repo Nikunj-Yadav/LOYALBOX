@@ -32,7 +32,7 @@ $rows = []; foreach ($list as $r) {
 page_start(['title' => 'Rewards', 'subtitle' => 'What customers can spend points on.', 'active' => 'rewards', 'who' => $admin,
     'action' => '<button class="btn btn-primary" type="button" data-dialog-open="#reward-dialog">' . icon('plus') . 'Add reward</button>']);
 echo data_table([['label' => 'Reward', 'sort' => 'text'], ['label' => 'Cost', 'sort' => 'num', 'class' => 'num'], ['label' => 'Stock', 'sort' => 'num', 'class' => 'num'], ['label' => 'Redeemed', 'sort' => 'num', 'class' => 'num'], ['label' => 'Status'], ['label' => 'Actions']], $rows,
-    ['filter' => ['col' => 4, 'label' => 'All statuses', 'options' => ['active', 'inactive']], 'empty' => ['No rewards yet', 'Add a reward so customers have something to aim for.', '<button class="btn btn-primary" type="button" data-dialog-open="#reward-dialog">Add reward</button>']]); ?>
+    ['filter' => ['col' => 4, 'label' => 'All statuses', 'options' => ['active', 'inactive']], 'empty' => ['No rewards yet', 'Add a reward so customers have something to aim for.', '<button class="btn" type="button" data-dialog-open="#reward-dialog">Add reward</button>']]); ?>
 <dialog class="modal" id="reward-dialog" aria-labelledby="rd-title"><form method="post" class="modal-body form" novalidate>
   <h2 id="rd-title">Reward</h2><?= csrf_field() ?><input type="hidden" name="action" value="save"><input type="hidden" name="id" value="0">
   <?= field(['name' => 'name', 'label' => 'Name', 'attrs' => ['required' => true, 'maxlength' => 120]]) ?>

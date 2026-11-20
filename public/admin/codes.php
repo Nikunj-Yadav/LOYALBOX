@@ -72,8 +72,8 @@ $rows = []; foreach ($batches as $b) {
             . action_form('batch_off', ['id' => $b['id']], 'Deactivate', 'ban', 'Deactivate all unclaimed codes in batch #' . $b['id'] . '?', true)
             . action_form('batch_on', ['id' => $b['id']], 'Activate', 'play', '') . '</div>']];
 }
-echo data_table([['label' => 'Batch', 'sort' => 'text'], ['label' => 'Product', 'sort' => 'text'], ['label' => 'Size', 'sort' => 'num', 'class' => 'num'], ['label' => 'Active', 'sort' => 'num', 'class' => 'num'], ['label' => 'Claimed', 'sort' => 'num', 'class' => 'num'], ['label' => 'Inactive', 'sort' => 'num', 'class' => 'num'], ['label' => 'Created', 'sort' => 'date'], ['label' => 'Actions']], $rows,
-    ['empty' => ['No batches yet', 'Generate a batch of codes for one of your products.', $products ? '<button class="btn btn-primary" type="button" data-dialog-open="#gen-dialog">Generate codes</button>' : '']]);
+echo data_table([['label' => 'Batch', 'sort' => 'text'], ['label' => 'Product', 'sort' => 'text'], ['label' => 'Size', 'sort' => 'num', 'class' => 'num'], ['label' => 'Active', 'sort' => 'num', 'class' => 'num'], ['label' => 'Claimed', 'sort' => 'num', 'class' => 'num'], ['label' => 'Inactive', 'sort' => 'num', 'class' => 'num'], ['label' => 'Created', 'sort' => 'date', 'class' => 'nowrap'], ['label' => 'Actions']], $rows,
+    ['empty' => ['No batches yet', 'Generate a batch of codes for one of your products.', $products ? '<button class="btn" type="button" data-dialog-open="#gen-dialog">Generate codes</button>' : '']]);
 
 echo '<h2 class="section-title">Codes' . ($fBatch ? ' in batch #' . $fBatch : '') . '</h2><div class="toolbar"><form method="get" class="filter-form">'
    . ($fBatch ? '<input type="hidden" name="batch" value="' . $fBatch . '">' : '')
@@ -85,8 +85,8 @@ $rows = []; foreach ($codes as $c) {
          : ($c['status'] === 'inactive' ? action_form('code_on', ['id' => $c['id'], 'back' => $fBatch ? 'filtered' : '', 'batch' => $fBatch], 'Activate', 'play') : '<span class="muted">Locked</span>');
     $rows[] = ['#' . $c['id'], '••••-••••-••••-' . $c['code_hint'], $c['product'], '#' . $c['batch_id'], ['html' => badge($c['status'])], (string)($c['email'] ?? '—'), ['html' => e(fmt_dt($c['claimed_at'])), 'v' => $c['claimed_at'] ? strtotime($c['claimed_at']) : 0], ['html' => $btn]];
 }
-echo data_table([['label' => 'ID', 'sort' => 'text'], ['label' => 'Code'], ['label' => 'Product', 'sort' => 'text'], ['label' => 'Batch'], ['label' => 'Status'], ['label' => 'Claimed by', 'sort' => 'text'], ['label' => 'Claimed at', 'sort' => 'date'], ['label' => 'Actions']], $rows,
-    ['filter' => ['col' => 4, 'label' => 'All statuses', 'options' => ['active', 'inactive', 'claimed']], 'note' => count($codes) >= 500 ? 'Showing the newest 500 matching codes. Use the filters or export for more.' : '',
+echo data_table([['label' => 'ID', 'sort' => 'text'], ['label' => 'Code', 'class' => 'nowrap'], ['label' => 'Product', 'sort' => 'text'], ['label' => 'Batch'], ['label' => 'Status'], ['label' => 'Claimed by', 'sort' => 'text'], ['label' => 'Claimed at', 'sort' => 'date', 'class' => 'nowrap'], ['label' => 'Actions']], $rows,
+    ['note' => count($codes) >= 500 ? 'Showing the newest 500 matching codes. Use the filters or export for more.' : '',
      'empty' => ['No codes match', 'Change the filter or generate a new batch.']]); ?>
 <dialog class="modal" id="gen-dialog" aria-labelledby="gd-title"><form method="post" class="modal-body form" novalidate>
   <h2 id="gd-title">Generate codes</h2><?= csrf_field() ?><input type="hidden" name="action" value="generate">

@@ -18,6 +18,6 @@ $rows = []; foreach ($list as $d) {
     $rows[] = ['#' . $d['id'], ['html' => '<a href="customer.php?id=' . (int)$d['uid'] . '">' . e($d['name']) . '</a>', 'v' => $d['name']], $d['reward'], ['html' => fmt_num($d['points_spent']), 'v' => $d['points_spent']], ['html' => badge($d['status'])], ['html' => e(fmt_dt($d['created_at'])), 'v' => strtotime($d['created_at'])], ['html' => $acts]];
 }
 page_start(['title' => 'Redemptions', 'subtitle' => 'Reward requests from customers.', 'active' => 'redemptions', 'who' => $admin]);
-echo data_table([['label' => 'Ref'], ['label' => 'Customer', 'sort' => 'text'], ['label' => 'Reward', 'sort' => 'text'], ['label' => 'Points', 'sort' => 'num', 'class' => 'num'], ['label' => 'Status'], ['label' => 'Date', 'sort' => 'date'], ['label' => 'Actions']], $rows,
+echo data_table([['label' => 'Ref'], ['label' => 'Customer', 'sort' => 'text'], ['label' => 'Reward', 'sort' => 'text'], ['label' => 'Points', 'sort' => 'num', 'class' => 'num'], ['label' => 'Status'], ['label' => 'Date', 'sort' => 'date', 'class' => 'nowrap'], ['label' => 'Actions']], $rows,
     ['filter' => ['col' => 4, 'label' => 'All statuses', 'options' => ['pending', 'fulfilled', 'cancelled']], 'empty' => ['No redemptions yet', 'Requests appear when customers redeem rewards.']]);
 page_end();

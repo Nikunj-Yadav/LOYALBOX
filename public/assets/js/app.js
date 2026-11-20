@@ -153,7 +153,11 @@
   $$('form').forEach(function (form) {
     var inputs = $$('input:not([type=hidden]):not([type=checkbox]), select, textarea', form);
     inputs.forEach(function (i) {
-      i.addEventListener('blur', function () { if (i.value !== '' || i.closest('.has-error')) validateInput(i); });
+      i.addEventListener('blur', function (e) {
+        // Focus moving to a button (e.g. Submit)? Skip: an error line appearing now would shift the button and the click would miss.
+        if (e.relatedTarget && e.relatedTarget.tagName === 'BUTTON') return;
+        if (i.value !== '' || i.closest('.has-error')) validateInput(i);
+      });
       i.addEventListener('input', function () { if (i.closest('.has-error')) validateInput(i); });
     });
     form.addEventListener('submit', function (e) {
@@ -237,7 +241,7 @@
     fetch(chart.getAttribute('data-src'), { credentials: 'same-origin' })
       .then(function (r) { if (!r.ok) throw new Error('bad status'); return r.json(); })
       .then(function (data) {
-        var NS = 'http://www.w3.org/2000/svg', W = 640, H = 220, pad = { l: 32, r: 8, t: 12, b: 28 };
+        var NS = 'http://www.w3.org/2000/svg', W = 420, H = 220, pad = { l: 28, r: 4, t: 12, b: 28 };
         var max = Math.max.apply(null, data.map(function (d) { return d.claims; })), total = data.reduce(function (s, d) { return s + d.claims; }, 0);
         var top = Math.max(4, max), bw = (W - pad.l - pad.r) / data.length;
         var s = document.createElementNS(NS, 'svg');
@@ -254,7 +258,7 @@
           var bar = el('rect', { x: x, y: H - pad.b - h, width: bw * 0.64, height: Math.max(h, 0), rx: 4, 'class': 'bar' });
           bar.appendChild(el('title', {}, d.label + ': ' + d.claims + ' claim' + (d.claims === 1 ? '' : 's')));
           s.appendChild(bar);
-          if (i % 2 === 0) s.appendChild(el('text', { x: x + bw * 0.32, y: H - 8, 'text-anchor': 'middle' }, d.label));
+          if (i % 3 === 0) s.appendChild(el('text', { x: x + bw * 0.32, y: H - 8, 'text-anchor': 'middle' }, d.label));
         });
         chart.textContent = '';
         chart.appendChild(s);

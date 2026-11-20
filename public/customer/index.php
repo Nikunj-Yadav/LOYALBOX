@@ -22,5 +22,5 @@ page_start(['title' => 'Overview', 'subtitle' => 'Your points at a glance.', 'ac
     $rows[] = [fmt_dt($t['created_at']), ['html' => badge($t['type'])], (string)$t['note'], ['html' => ($t['points'] > 0 ? '+' : '') . fmt_num($t['points']), 'v' => $t['points']], fmt_num($t['balance_after'])];
 }
 echo data_table([['label' => 'When'], ['label' => 'Type'], ['label' => 'Details'], ['label' => 'Points', 'class' => 'num'], ['label' => 'Balance', 'class' => 'num']], $rows,
-    ['empty' => ['No activity yet', 'Claim the code inside a product box to earn your first points.', '<a class="btn btn-primary" href="claim.php">Claim a product</a>']]);
+    ['empty' => ['No activity yet', 'Claim the code inside a product box to earn your first points.', '<a class="btn" href="claim.php">Claim a product</a>']]);
 page_end();

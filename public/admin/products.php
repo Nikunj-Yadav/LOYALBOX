@@ -34,7 +34,7 @@ $rows = []; foreach ($list as $p) {
 page_start(['title' => 'Products', 'subtitle' => 'What you make and how many points each box is worth.', 'active' => 'products', 'who' => $admin,
     'action' => '<button class="btn btn-primary" type="button" data-dialog-open="#product-dialog">' . icon('plus') . 'Add product</button>']);
 echo data_table([['label' => 'Product', 'sort' => 'text'], ['label' => 'SKU', 'sort' => 'text'], ['label' => 'Points', 'sort' => 'num', 'class' => 'num'], ['label' => 'Codes', 'sort' => 'num', 'class' => 'num'], ['label' => 'Claims', 'sort' => 'num', 'class' => 'num'], ['label' => 'Status'], ['label' => 'Actions']], $rows,
-    ['filter' => ['col' => 5, 'label' => 'All statuses', 'options' => ['active', 'inactive']], 'empty' => ['No products yet', 'Add your first product, then generate codes for it.', '<button class="btn btn-primary" type="button" data-dialog-open="#product-dialog">Add product</button>']]); ?>
+    ['filter' => ['col' => 5, 'label' => 'All statuses', 'options' => ['active', 'inactive']], 'empty' => ['No products yet', 'Add your first product, then generate codes for it.', '<button class="btn" type="button" data-dialog-open="#product-dialog">Add product</button>']]); ?>
 <dialog class="modal" id="product-dialog" aria-labelledby="pd-title"><form method="post" class="modal-body form" novalidate>
   <h2 id="pd-title">Product</h2><?= csrf_field() ?><input type="hidden" name="action" value="save"><input type="hidden" name="id" value="0">
   <?= field(['name' => 'name', 'label' => 'Name', 'attrs' => ['required' => true, 'maxlength' => 120]]) ?>

@@ -25,7 +25,7 @@ foreach ($rewards as $r) {
     <div class="meter" role="img" aria-label="You have <?= $pct ?> percent of the points needed"><progress max="100" value="<?= $pct ?>"></progress></div>
     <form method="post" data-confirm="Spend <?= fmt_num($cost) ?> points on <?= e($r['name']) ?>?">
       <?= csrf_field() ?><input type="hidden" name="reward_id" value="<?= (int)$r['id'] ?>">
-      <button class="btn<?= $can ? ' btn-primary' : '' ?>" type="submit" <?= $can ? '' : 'disabled' ?>><?= $stock < 1 ? 'Out of stock' : ($can ? 'Redeem' : fmt_num($cost - $bal) . ' points to go') ?></button>
+      <button class="btn" type="submit" <?= $can ? '' : 'disabled' ?>><?= $stock < 1 ? 'Out of stock' : ($can ? 'Redeem' : fmt_num($cost - $bal) . ' points to go') ?></button>
     </form>
   </article>
 <?php } echo '</div>'; }

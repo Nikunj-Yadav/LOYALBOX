@@ -9,7 +9,7 @@ $rows = []; foreach ($tx as $t) {
 }
 page_start(['title' => 'Points history', 'subtitle' => 'Every change to your balance, newest first.', 'active' => 'history', 'who' => $user,
     'action' => '<a class="btn btn-primary" href="claim.php">' . icon('scan') . 'Claim a product</a>']);
-echo data_table([['label' => 'When', 'sort' => 'date'], ['label' => 'Type'], ['label' => 'Details', 'sort' => 'text'], ['label' => 'Points', 'sort' => 'num', 'class' => 'num'], ['label' => 'Balance', 'sort' => 'num', 'class' => 'num']], $rows,
+echo data_table([['label' => 'When', 'sort' => 'date', 'class' => 'nowrap'], ['label' => 'Type'], ['label' => 'Details', 'sort' => 'text'], ['label' => 'Points', 'sort' => 'num', 'class' => 'num'], ['label' => 'Balance', 'sort' => 'num', 'class' => 'num']], $rows,
     ['filter' => ['col' => 1, 'label' => 'All types', 'options' => ['claim', 'redeem', 'refund']],
-     'empty' => ['No transactions yet', 'Your claims and redemptions will appear here.', '<a class="btn btn-primary" href="claim.php">Claim a product</a>']]);
+     'empty' => ['No transactions yet', 'Your claims and redemptions will appear here.', '<a class="btn" href="claim.php">Claim a product</a>']]);
 page_end();

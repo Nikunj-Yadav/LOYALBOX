@@ -21,6 +21,6 @@ $rows = []; foreach ($list as $u) {
             . ($u['status'] === 'active' ? action_form('block', ['id' => $u['id']], 'Block', 'ban', 'Block ' . $u['name'] . '? They will be signed out and cannot claim or redeem.', true) : action_form('unblock', ['id' => $u['id']], 'Unblock', 'play')) . '</div>']];
 }
 page_start(['title' => 'Customers', 'subtitle' => 'Everyone who has registered.', 'active' => 'customers', 'who' => $admin]);
-echo data_table([['label' => 'Name', 'sort' => 'text'], ['label' => 'E-mail', 'sort' => 'text'], ['label' => 'Phone'], ['label' => 'Points', 'sort' => 'num', 'class' => 'num'], ['label' => 'Claims', 'sort' => 'num', 'class' => 'num'], ['label' => 'Failed claims 24 h', 'sort' => 'num', 'class' => 'num'], ['label' => 'Status'], ['label' => 'Joined', 'sort' => 'date'], ['label' => 'Actions']], $rows,
+echo data_table([['label' => 'Name', 'sort' => 'text'], ['label' => 'E-mail', 'sort' => 'text'], ['label' => 'Phone'], ['label' => 'Points', 'sort' => 'num', 'class' => 'num'], ['label' => 'Claims', 'sort' => 'num', 'class' => 'num'], ['label' => 'Failed claims 24 h', 'sort' => 'num', 'class' => 'num'], ['label' => 'Status'], ['label' => 'Joined', 'sort' => 'date', 'class' => 'nowrap'], ['label' => 'Actions']], $rows,
     ['filter' => ['col' => 6, 'label' => 'All statuses', 'options' => ['active', 'blocked']], 'empty' => ['No customers yet', 'Customers appear here once they register.']]);
 page_end();

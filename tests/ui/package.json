@@ -1,0 +1,10 @@
+{
+  "name": "loyalbox-ui-tests",
+  "private": true,
+  "type": "module",
+  "description": "Headless-browser UI tests. Install with: npm install   Run with: node ui_test.mjs",
+  "dependencies": {
+    "@sparticuz/chromium": "^153.0.0",
+    "puppeteer-core": "^25.18.1"
+  }
+}

@@ -8,7 +8,7 @@ $rows = []; foreach ($list as $d) {
 }
 page_start(['title' => 'My redemptions', 'subtitle' => 'Rewards you have redeemed and their status.', 'active' => 'redemptions', 'who' => $user,
     'action' => '<a class="btn btn-primary" href="rewards.php">' . icon('gift') . 'Browse rewards</a>']);
-echo data_table([['label' => 'Ref'], ['label' => 'Reward', 'sort' => 'text'], ['label' => 'Points', 'sort' => 'num', 'class' => 'num'], ['label' => 'Status'], ['label' => 'Date', 'sort' => 'date']], $rows,
+echo data_table([['label' => 'Ref'], ['label' => 'Reward', 'sort' => 'text'], ['label' => 'Points', 'sort' => 'num', 'class' => 'num'], ['label' => 'Status'], ['label' => 'Date', 'sort' => 'date', 'class' => 'nowrap']], $rows,
     ['filter' => ['col' => 3, 'label' => 'All statuses', 'options' => ['pending', 'fulfilled', 'cancelled']],
-     'empty' => ['Nothing redeemed yet', 'Spend your points on a reward and it will show up here.', '<a class="btn btn-primary" href="rewards.php">Browse rewards</a>']]);
+     'empty' => ['Nothing redeemed yet', 'Spend your points on a reward and it will show up here.', '<a class="btn" href="rewards.php">Browse rewards</a>']]);
 page_end();
