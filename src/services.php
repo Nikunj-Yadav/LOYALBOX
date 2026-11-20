@@ -19,14 +19,48 @@ function normalize_code(string $raw): ?string
     return $c;
 }
 
-/** Keyed hash stored in the database. Fails closed if the secret is missing. */
+/**
+ * The secret ("pepper") mixed into every code hash.
+ * Order: CODE_PEPPER from .env / config.local.php, otherwise config/secret.key, which is created
+ * automatically (random, 64 hex characters) the first time it is needed. BACK THAT FILE UP:
+ * without it no existing code can be verified. $file is only for tests.
+ */
+function code_pepper(?string $file = null): string
+{
+    static $cache = null;
+    if ($file === null) {
+        if ($cache !== null) { return $cache; }
+        $env = env('CODE_PEPPER');
+        if ($env !== null && $env !== '' && !str_starts_with($env, 'change_me')) {
+            if (strlen($env) < 32) { throw new RuntimeException('CODE_PEPPER is too short (use at least 32 characters, or remove it to get an automatic key).'); }
+            return $cache = $env;
+        }
+        $file = ROOT . '/config/secret.key';
+        $useCache = true;
+    }
+    $read = static function () use ($file): ?string {
+        $k = is_readable($file) ? trim((string)file_get_contents($file)) : '';
+        return strlen($k) >= 32 ? $k : null;
+    };
+    $key = $read();
+    if ($key === null) {
+        if (!is_dir(dirname($file))) { @mkdir(dirname($file), 0775, true); }
+        $h = @fopen($file, 'x');                 // 'x' = create only if missing, so two requests cannot both write a key
+        if ($h) {
+            $key = bin2hex(random_bytes(32));
+            fwrite($h, $key . "\n"); fclose($h); @chmod($file, 0600);
+        } else {
+            for ($i = 0; $i < 40 && ($key = $read()) === null; $i++) { usleep(50000); }   // another request is writing it
+        }
+    }
+    if ($key === null) { throw new RuntimeException('Cannot create ' . $file . '. Make the config folder writable.'); }
+    return !empty($useCache) ? ($cache = $key) : $key;
+}
+
+/** Keyed hash stored in the database. */
 function code_hash(string $normalized): string
 {
-    $pepper = env('CODE_PEPPER');
-    if ($pepper === null || strlen($pepper) < 32 || str_starts_with($pepper, 'change_me')) {
-        throw new RuntimeException('CODE_PEPPER is missing, too short or still the placeholder.');
-    }
-    return hash_hmac('sha256', $normalized, $pepper);
+    return hash_hmac('sha256', $normalized, code_pepper());
 }
 
 function generate_code(): string

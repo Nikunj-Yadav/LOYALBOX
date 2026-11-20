@@ -7,7 +7,12 @@ function env(string $key, ?string $default = null): ?string
     static $file = null;
     if ($file === null) {
         $file = [];
-        $path = ROOT . '/.env';
+        $local = ROOT . '/config/config.local.php';          // optional: copy config/config.example.php to this name
+        if (is_readable($local)) {
+            $arr = require $local;
+            $file = is_array($arr) ? array_map('strval', $arr) : [];
+        }
+        $path = ROOT . '/.env';                              // optional too (see .env.example)
         if (is_readable($path)) {
             foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
                 $line = trim($line);

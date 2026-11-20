@@ -8,6 +8,7 @@
 | **MySQL/MariaDB (InnoDB)** | Needs real transactions, row locks (`SELECT … FOR UPDATE`) and UNIQUE constraints. These are what make double-claims impossible. |
 | **Server-rendered pages** | Simple, works without a build step, safe by default because output is escaped in one place (`e()`). |
 | **Vanilla JS (`app.js`, ~285 lines)** | Only behaviour the brief asks for: theme, mobile menu, tables, dialogs, toasts, validation. No data logic lives in the browser. |
+| **`database.sql` + browser setup + `check.php`** | A non-technical user should be able to install with only XAMPP and phpMyAdmin: import one file, open the setup check, create the admin in the browser. |
 | **Inline SVG chart, no Chart.js** | One small chart; avoids a CDN dependency so the app works offline. |
 
 ## Request flow
@@ -82,13 +83,14 @@ erDiagram
 | Concern | Measure |
 |---|---|
 | Guessing codes | 80-bit random codes; 5 failed claims per 15 min per account and 15 per IP; every failure logged |
-| Leaked database | Only HMAC hashes of codes stored (secret pepper outside the database); passwords with bcrypt (`password_hash`) |
+| Leaked database | Only HMAC hashes of codes stored (secret key in `config/secret.key` or `.env`, never in the database); passwords with bcrypt (`password_hash`) |
 | Race conditions | Transactions, row locks, conditional updates, UNIQUE constraints (see above) |
 | SQL injection | PDO prepared statements, emulation off; the few interpolated names (`$table`, rate-limit field) come from fixed whitelists in code |
 | XSS | Every output through `e()`; strict CSP (`script-src 'self'`, no inline scripts or event handlers) |
 | CSRF | Per-session token checked on every POST in `bootstrap.php`; rotated after code generation so a refresh cannot repeat it |
 | Sessions | Separate cookies for customers and admins, HttpOnly, SameSite=Lax, Secure on HTTPS, ID regenerated at login, idle timeouts |
 | Login abuse | Lockout per e-mail and IP; equal timing for unknown e-mails; generic error messages |
+| Web exposure | Only `public/` is meant to be served; `.htaccess` files deny `src/`, `config/`, `tests/`, `scripts/` and `.sql/.md/.key` files when the whole folder sits in `htdocs`; `check.php` verifies it |
 | Error leakage | `display_errors` off; uncaught errors become a friendly page, details go to the server log |
 | Audit | Ledger for points; activity log for actions; security events for failures |
 

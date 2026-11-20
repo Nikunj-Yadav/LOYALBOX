@@ -257,3 +257,9 @@ dialog.modal[open] { animation: pop var(--t-med) var(--ease); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; animation-delay: 0ms !important; transition-duration: .001ms !important; }
 }
+
+/* ---------- setup check page ---------- */
+.check-card { width: min(100%, 720px); }
+.checklist { list-style: none; margin: var(--s-3) 0; padding: 0; display: grid; gap: var(--s-3); }
+.checklist li { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s-3); padding-bottom: var(--s-3); border-bottom: 1px solid var(--line); }
+.checklist li:last-child { border-bottom: 0; }

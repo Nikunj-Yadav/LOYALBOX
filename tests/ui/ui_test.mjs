@@ -41,6 +41,10 @@ for (const [label, w, h, scheme] of viewports) {
   await c.goto(`${BASE}/customer/login.php`, { waitUntil: 'networkidle0' });
   check(`[${label}] customer login: no overflow`, (await overflow(c)) <= 0, 'overflow ' + await overflow(c));
   await c.screenshot({ path: `/tmp/loyalbox-shots/${label}-customer-login.png` });
+  c.problems.length = 0;
+  await c.goto(`${BASE}/check.php`, { waitUntil: 'networkidle0' });
+  check(`[${label}] check.php: no overflow, no console errors, every item OK`, (await overflow(c)) <= 0 && c.problems.length === 0 && !(await c.content()).includes('Fix needed'), `overflow ${await overflow(c)} ${c.problems.join(' | ')}`);
+  await c.screenshot({ path: `/tmp/loyalbox-shots/${label}-check.png`, fullPage: true });
   await c.goto(`${BASE}/customer/register.php`, { waitUntil: 'networkidle0' });
   check(`[${label}] customer register: no overflow`, (await overflow(c)) <= 0);
   await login(c, 'customer', 'zed@test.local', 'correct-horse-9');

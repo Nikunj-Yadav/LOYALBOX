@@ -8,12 +8,11 @@ require __DIR__ . '/bootstrap_test.php';
 $base = getenv('HTTP_BASE') ?: 'http://127.0.0.1:8081';
 
 $adminPdo = new PDO(sprintf('mysql:host=%s;port=%s;charset=utf8mb4', env('DB_HOST', '127.0.0.1'), env('DB_PORT', '3306')), getenv('TEST_ADMIN_USER') ?: env('DB_USER'), getenv('TEST_ADMIN_PASS') ?: env('DB_PASS'), [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-$adminPdo->exec('CREATE DATABASE IF NOT EXISTS loyalbox_test CHARACTER SET utf8mb4');
-db()->exec(file_get_contents(ROOT . '/database/schema.sql'));
-q("INSERT INTO admins (name,email,password_hash) VALUES ('Test Admin','admin@test.local',?)", [password_hash('admin-password-1', PASSWORD_DEFAULT)]);
+$adminPdo->exec('DROP DATABASE IF EXISTS loyalbox_test');
+$adminPdo->exec('CREATE DATABASE loyalbox_test CHARACTER SET utf8mb4');
+install_schema();
 q("INSERT INTO products (name,sku,points,is_active) VALUES ('Choc','CHOC',50,1)");
 q("INSERT INTO rewards (name,points_cost,stock,is_active) VALUES ('Bag',40,3,1)");
-$batch = create_code_batch(1, 12, 'http test', 1); $codes = $batch['codes'];
 
 /** Tiny HTTP client with its own cookie jar. Never follows redirects, so we can inspect them. */
 final class Client {
@@ -39,6 +38,28 @@ final class Client {
 $results = []; $failed = 0;
 function check(string $n, bool $ok, string $d = ''): void { global $results, $failed; $results[] = [$n, $ok, $d]; if (!$ok) $failed++; echo ($ok ? '  PASS ' : '  FAIL ') . $n . ($ok || !$d ? '' : "  -> $d") . "\n"; }
 $errRe = '/Fatal error|Warning:|Notice:|Deprecated:|Stack trace|SQLSTATE|Parse error|PDOException/i';
+
+echo "\n== First-time admin setup (browser, no terminal) ==\n";
+$s = new Client($base);
+$r = $s->req('GET', '/admin/login.php');
+check('On a brand-new install the admin sign-in page sends you to setup', $r['status'] === 302 && str_contains($r['location'], 'setup.php'), $r['location']);
+$r = $s->req('GET', '/admin/setup.php');
+check('Setup page shows the create-admin form', $r['status'] === 200 && str_contains($r['body'], 'Create admin account') && !preg_match($errRe, $r['body']));
+$r = $s->post('/admin/setup.php', ['name' => 'Test Admin', 'email' => 'not-an-email', 'password' => 'short', 'password2' => 'other']);
+check('Setup rejects bad e-mail / short password / mismatch and creates nothing', $r['status'] === 200 && (int)scalar('SELECT COUNT(*) FROM admins') === 0 && str_contains($r['body'], 'valid e-mail'));
+$r = $s->req('POST', '/admin/setup.php', ['name' => 'X', 'email' => 'x@test.local', 'password' => 'long-enough-pass-1', 'password2' => 'long-enough-pass-1']);
+check('Setup without a CSRF token is refused (419)', $r['status'] === 419 && (int)scalar('SELECT COUNT(*) FROM admins') === 0);
+$r = $s->post('/admin/setup.php', ['name' => 'Test Admin', 'email' => 'Admin@Test.local', 'password' => 'admin-password-1', 'password2' => 'admin-password-1']);
+check('Valid setup creates the admin and signs them in', $r['status'] === 302 && str_contains($r['location'], 'index.php') && (int)scalar('SELECT COUNT(*) FROM admins') === 1);
+check('Admin e-mail is stored lower-case and the password hashed', scalar('SELECT email FROM admins') === 'admin@test.local' && str_starts_with((string)scalar('SELECT password_hash FROM admins'), '$2y$'));
+$dash0 = $s->req('GET', '/admin/index.php'); check('The admin dashboard opens right after setup', $dash0['status'] === 200, 'status ' . $dash0['status'] . ' loc ' . $dash0['location']);
+$r = (new Client($base))->req('GET', '/admin/setup.php');
+check('Once an admin exists the setup page is gone (redirects to login)', $r['status'] === 302 && str_contains($r['location'], 'login.php'));
+$r = (new Client($base))->req('POST', '/admin/setup.php', ['name' => 'Evil', 'email' => 'evil@test.local', 'password' => 'long-enough-pass-1', 'password2' => 'long-enough-pass-1', 'csrf' => 'x']);
+check('A second admin can NOT be created through setup', (int)scalar('SELECT COUNT(*) FROM admins') === 1);
+$batch = create_code_batch(1, 12, 'http test', 1); $codes = $batch['codes'];
+$r = $s->req('GET', '/check.php');
+check('Setup check page (check.php) renders and every item is OK', $r['status'] === 200 && !str_contains($r['body'], 'Fix needed') && str_contains($r['body'], 'Database tables imported') && str_contains($r['body'], 'Admin account'), 'status ' . $r['status']);
 
 echo "\n== Access control ==\n";
 $anon = new Client($base);

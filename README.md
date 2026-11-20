@@ -14,45 +14,59 @@ A small PHP 8 + MySQL web app for a factory that ships products in boxes. Each b
 
 PHP 8.1+ (PDO), MySQL 8 or MariaDB 10.5+, plain HTML/CSS, vanilla JavaScript, inline SVG icons. No framework, no Composer, no Node needed to run the app. See `ARCHITECTURE.md` for why.
 
-## Installation
+## Install and run with XAMPP (no terminal needed)
 
-Requirements: PHP 8.1+ with `pdo_mysql` and `mbstring`; MySQL 8 or MariaDB 10.5+.
+### 1. Start the servers
+Install **XAMPP for PHP 8.1 or newer** (apachefriends.org). In the XAMPP Control Panel press **Start** next to **Apache** and **MySQL**.
+
+### 2. Put the project in `htdocs`
+Copy the whole `loyalbox` folder to `C:\xampp\htdocs\loyalbox` (macOS: `/Applications/XAMPP/htdocs/loyalbox`, Linux: `/opt/lampp/htdocs/loyalbox`).
+
+### 3. Import the database
+1. Open <http://localhost/phpmyadmin>.
+2. Click the **Import** tab. **Do not select any database first.**
+3. Choose `database.sql` from the project folder and click **Import**.
+
+The file creates the database `loyalbox` with its 11 tables. It is safe to import twice (existing tables and data are kept).
+
+### 4. Open the setup check
+Go to <http://localhost/loyalbox/public/check.php>. Every line should say **OK** (the *Admin account* line says "Fix needed" until step 5). If something is wrong, the line tells you how to fix it.
+
+A fresh XAMPP uses MySQL user `root` with an empty password, and LoyalBox is already set up for that, so there is nothing to edit. If you gave MySQL a password, copy `config/config.example.php` to `config/config.local.php` and put it there.
+
+### 5. Create the admin account
+Open <http://localhost/loyalbox/public/admin/>. The first time, it asks you to create the admin (name, e-mail, password of at least 10 characters). This page disappears once an admin exists, so do it before you share the address with anyone.
+
+### 6. Use it
+| What | Address |
+|---|---|
+| Customers | <http://localhost/loyalbox/public/customer/> |
+| Admin | <http://localhost/loyalbox/public/admin/> |
+| Setup check | <http://localhost/loyalbox/public/check.php> |
+
+On macOS/Linux, if the setup check says the `config` folder is not writable, run `chmod -R 777 config` once.
+
+### Secret key (important)
+The first time you generate codes, LoyalBox creates a random secret in `config/secret.key`. Codes are stored only as hashes made with it, so **back this file up and never delete it**: without it no existing code can be verified. (You can instead set `CODE_PEPPER` in `config/config.local.php` or `.env`.)
+
+### Troubleshooting
+| Problem | Fix |
+|---|---|
+| "#1046 No database selected" while importing | You had a database open in phpMyAdmin. Import with **none** selected (or just use the current `database.sql`, which selects it for you). |
+| "The database is not ready" page | MySQL is not started, or `database.sql` was not imported. Open `check.php`. |
+| Forgot the admin password | In phpMyAdmin open table `admins`, delete the row, then open `public/admin/` to create a new one. |
+| `check.php` says private folders are NOT blocked | In XAMPP's `httpd.conf` set `AllowOverride All` for htdocs and restart Apache. |
+
+## Optional: command line / other servers
 
 ```bash
-# 1. Database and a least-privilege user (run as a MySQL admin)
-mysql -u root -p -e "CREATE DATABASE loyalbox CHARACTER SET utf8mb4;
-  CREATE USER 'loyal'@'localhost' IDENTIFIED BY 'choose-a-strong-password';
-  GRANT SELECT, INSERT, UPDATE, DELETE ON loyalbox.* TO 'loyal'@'localhost';"
-
-# 2. Configuration
-cp .env.example .env
-#    edit .env: DB_* values, and a secret for CODE_PEPPER:
-php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
+mysql -u root -p < database.sql                       # same file; creates the database
+php scripts/setup.php --admin=you@example.com         # alternative to the browser setup page
+php scripts/setup.php --demo                          # optional sample data, labelled "Demo"
+php -S localhost:8000 -t public                       # built-in server: http://localhost:8000/customer/
 ```
 
-The app user above cannot create tables, so create the schema with an admin account:
-
-```bash
-# 3. Create tables (DESTROYS existing LoyalBox tables) and the first admin
-mysql -u root -p loyalbox < database/schema.sql
-php scripts/setup.php --admin=you@example.com        # prompts for a password (min 10 chars)
-#   optional sample data, clearly labelled "Demo":  php scripts/setup.php --demo
-```
-
-(`php scripts/setup.php --schema` does step 3's schema part too, but needs a `.env` user with CREATE/DROP rights.)
-
-## Run
-
-```bash
-php -S localhost:8000 -t public
-```
-
-* Customers: <http://localhost:8000/customer/>
-* Admin: <http://localhost:8000/admin/>
-
-For production, point the web server's document root at `public/` (never at the project root, so `src/` and `.env` are not reachable), serve over HTTPS and set `APP_URL` in `.env` so printed claim links use your real address.
-
-**Back up `CODE_PEPPER`.** Codes are stored as keyed hashes; if the secret is lost or changed, every existing code stops working.
+For production, point the web server's document root at `public/` (so `src/`, `config/` and `.env` are not reachable at all), serve over HTTPS and set `APP_URL` so printed claim links use your real address.
 
 ## Typical demo script
 
@@ -86,9 +100,10 @@ php tests/css_audit.php                  # design-token audit
 ## Project layout
 
 ```
-public/            web root: customer/, admin/, assets/ (css, js)
+public/            web root: customer/, admin/, check.php, assets/ (css, js)
 src/               config, db, helpers, security, services (business rules), layout
-database/          schema.sql
-scripts/setup.php  CLI: schema, first admin, optional demo data
+database.sql       creates the database and tables (import in phpMyAdmin)
+config/            optional settings, auto-created secret.key (never published)
+scripts/setup.php  optional CLI: tables, first admin, demo data
 tests/             automated tests and results
 ```

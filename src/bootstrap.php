@@ -5,7 +5,7 @@
 declare(strict_types=1);
 
 define('ROOT', dirname(__DIR__));
-define('ASSETS', '../assets/');                 // relative path from public/customer and public/admin
+if (!defined('ASSETS')) { define('ASSETS', '../assets/'); }                 // relative path from public/customer and public/admin
 
 require ROOT . '/src/config.php';
 require ROOT . '/src/helpers.php';
@@ -22,6 +22,10 @@ error_reporting(E_ALL);
 set_exception_handler(function (Throwable $e): void {
     error_log('[LoyalBox] ' . get_class($e) . ': ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
     if (!headers_sent()) { http_response_code(500); }
+    $notReady = $e instanceof PDOException && (in_array((int)$e->getCode(), [1044, 1045, 1049, 2002], true) || (int)($e->errorInfo[1] ?? 0) === 1146);
+    if ($notReady) {
+        render_error_page('The database is not ready', 'Start MySQL, import database.sql in phpMyAdmin, then open check.php (in the public folder) to see exactly what is missing.');
+    }
     render_error_page('Something went wrong', 'We could not complete that request. Please try again in a moment.');
 });
 

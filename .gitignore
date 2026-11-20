@@ -1,5 +1,8 @@
 .env
+config/config.local.php
+config/secret.key
 *.log
 .DS_Store
 /vendor/
 /tmp/
+tests/ui/node_modules/

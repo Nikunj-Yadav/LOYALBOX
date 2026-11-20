@@ -1,11 +1,12 @@
--- LoyalBox schema (MySQL 8 / MariaDB 10.5+, InnoDB, utf8mb4)
--- Run: mysql -u root -p loyalbox < database/schema.sql
-SET FOREIGN_KEY_CHECKS = 0;
-DROP TABLE IF EXISTS activity_logs, security_events, point_transactions, redemptions, claims,
-  product_codes, product_batches, rewards, products, admins, users;
-SET FOREIGN_KEY_CHECKS = 1;
+-- ============================================================================
+-- LoyalBox database (MySQL 8 / MariaDB 10.5+, InnoDB, utf8mb4)
+-- phpMyAdmin: open the "Import" tab (no database selected), choose this file, click Import.
+-- It creates the database itself and is SAFE TO IMPORT TWICE: existing tables are kept.
+-- ============================================================================
+CREATE DATABASE IF NOT EXISTS `loyalbox` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `loyalbox`;
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id            INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   name          VARCHAR(100) NOT NULL,
   email         VARCHAR(190) NOT NULL,
@@ -19,7 +20,7 @@ CREATE TABLE users (
   UNIQUE KEY uq_users_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE admins (
+CREATE TABLE IF NOT EXISTS admins (
   id            INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   name          VARCHAR(100) NOT NULL,
   email         VARCHAR(190) NOT NULL,
@@ -29,7 +30,7 @@ CREATE TABLE admins (
   UNIQUE KEY uq_admins_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
   id          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   name        VARCHAR(120) NOT NULL,
   sku         VARCHAR(40)  NOT NULL,
@@ -40,7 +41,7 @@ CREATE TABLE products (
   UNIQUE KEY uq_products_sku (sku)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE product_batches (
+CREATE TABLE IF NOT EXISTS product_batches (
   id         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   product_id INT UNSIGNED NOT NULL,
   quantity   INT UNSIGNED NOT NULL,
@@ -51,7 +52,7 @@ CREATE TABLE product_batches (
   CONSTRAINT fk_batch_admin   FOREIGN KEY (created_by) REFERENCES admins(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE product_codes (
+CREATE TABLE IF NOT EXISTS product_codes (
   id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   batch_id   INT UNSIGNED NOT NULL,
   product_id INT UNSIGNED NOT NULL,
@@ -71,7 +72,7 @@ CREATE TABLE product_codes (
   CONSTRAINT fk_code_user    FOREIGN KEY (claimed_by) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE claims (
+CREATE TABLE IF NOT EXISTS claims (
   id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   user_id         INT UNSIGNED NOT NULL,
   code_id         BIGINT UNSIGNED NOT NULL,
@@ -87,7 +88,7 @@ CREATE TABLE claims (
   CONSTRAINT fk_claim_product FOREIGN KEY (product_id) REFERENCES products(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE rewards (
+CREATE TABLE IF NOT EXISTS rewards (
   id          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   name        VARCHAR(120) NOT NULL,
   description VARCHAR(500) NULL,
@@ -97,7 +98,7 @@ CREATE TABLE rewards (
   created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE redemptions (
+CREATE TABLE IF NOT EXISTS redemptions (
   id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   user_id      INT UNSIGNED NOT NULL,
   reward_id    INT UNSIGNED NOT NULL,
@@ -111,7 +112,7 @@ CREATE TABLE redemptions (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Append-only ledger: every balance change is one row. users.points_balance is a cache of SUM(points).
-CREATE TABLE point_transactions (
+CREATE TABLE IF NOT EXISTS point_transactions (
   id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   user_id       INT UNSIGNED NOT NULL,
   type          ENUM('claim','redeem','refund') NOT NULL,
@@ -126,7 +127,7 @@ CREATE TABLE point_transactions (
   CONSTRAINT fk_tx_user FOREIGN KEY (user_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE security_events (
+CREATE TABLE IF NOT EXISTS security_events (
   id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   event_type VARCHAR(40) NOT NULL,   -- login_failed, admin_login_failed, claim_failed, claim_rate_limited, register ...
   user_id    INT UNSIGNED NULL,
@@ -140,7 +141,7 @@ CREATE TABLE security_events (
   KEY ix_se_ident_time (identifier, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE activity_logs (
+CREATE TABLE IF NOT EXISTS activity_logs (
   id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   actor_type ENUM('admin','customer','system') NOT NULL,
   actor_id   INT UNSIGNED NULL,

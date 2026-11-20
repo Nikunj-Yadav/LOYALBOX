@@ -1,7 +1,7 @@
 <?php
 /**
  * CLI setup:  php scripts/setup.php [--schema] [--admin=email] [--demo]
- *   --schema        (re)create all tables from database/schema.sql  (DESTROYS existing data)
+ *   --schema        import database.sql (creates the database and any missing tables; keeps existing data)
  *   --admin=EMAIL   create an admin; the password is read from ADMIN_PASSWORD env var or prompted
  *   --demo          add sample products/rewards and one demo customer (clearly labelled demo data)
  */
@@ -17,8 +17,8 @@ $opts = getopt('', ['schema', 'admin::', 'demo']);
 if (!$opts) { exit("Usage: php scripts/setup.php [--schema] [--admin=email] [--demo]\n"); }
 
 if (isset($opts['schema'])) {
-    db()->exec(file_get_contents(ROOT . '/database/schema.sql'));
-    echo "Schema created.\n";
+    db()->exec((string)preg_replace('/^\s*(CREATE DATABASE|USE)\b[^;]*;/mi', '', (string)file_get_contents(ROOT . '/database.sql')));
+    echo "Tables are ready.\n";
 }
 if (isset($opts['admin'])) {
     $email = mb_strtolower(trim((string)$opts['admin']));

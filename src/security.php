@@ -91,7 +91,7 @@ function current_user(): ?array
     $user = $id ? fetch_one('SELECT id, name, email, phone, points_balance, status, created_at FROM users WHERE id = ?', [$id]) : null;
     if ($user && $user['status'] !== 'active') { $user = null; }
     if (!$user && $id) { unset($_SESSION['user_id']); }
-    if ($user && (time() - (int)($_SESSION['last_seen'] ?? 0)) > 7200) {   // 2 h idle
+    if ($user && isset($_SESSION['last_seen']) && (time() - (int)$_SESSION['last_seen']) > 7200) {   // 2 h idle (a brand-new session has no timestamp yet)
         session_unset(); $user = null;
     }
     $_SESSION['last_seen'] = time();
@@ -111,7 +111,7 @@ function current_admin(): ?array
     if ($cache !== false) { return $cache; }
     $id = $_SESSION['admin_id'] ?? null;
     $admin = $id ? fetch_one('SELECT id, name, email FROM admins WHERE id = ?', [$id]) : null;
-    if ($admin && (time() - (int)($_SESSION['last_seen'] ?? 0)) > 1800) {  // 30 min idle
+    if ($admin && isset($_SESSION['last_seen']) && (time() - (int)$_SESSION['last_seen']) > 1800) {  // 30 min idle (a brand-new session has no timestamp yet)
         session_unset(); $admin = null;
     }
     if (!$admin && $id) { unset($_SESSION['admin_id']); }

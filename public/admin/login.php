@@ -1,6 +1,7 @@
 <?php
 define('AREA', 'admin');
 require __DIR__ . '/../../src/bootstrap.php';
+if ((int)scalar('SELECT COUNT(*) FROM admins') === 0) { redirect('setup.php'); }   // brand-new install: create the admin first
 if (current_admin()) { redirect('index.php'); }
 $errors = []; $email = '';
 if (is_post()) {

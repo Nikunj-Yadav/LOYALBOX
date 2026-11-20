@@ -6,12 +6,12 @@ Results below come from the runs described in `AI_LOG.md`, on PHP 8.3.6 + MariaD
 
 | Suite | Command | What it covers | Result |
 |---|---|---|---|
-| Business rules | `php tests/run_tests.php` | code format/normalisation, no plaintext storage, claim success, double claim, other user, inactive code/product, blocked user, batch deactivate, rate limiting, redeem/cancel/refund, DB-level constraints, **12-way and 8-way parallel-process races**, ledger vs balance | **61 / 61 passed** (`RESULTS.md`) |
-| HTTP end-to-end | `php tests/http_test.php` | auth gating of every page, CSRF (missing/forged), security headers, cookie flags, registration validation, XSS escaping, password hashing, claim flow, SQL-injection-style input, rate-limited sign-in, admin CRUD, one-time code display + replay rejection, CSV export has no plaintext, blocking, activity log | **80 / 80 passed** (`RESULTS_HTTP.md`) |
-| Browser UI | `cd tests/ui && npm i && node ui_test.mjs` | all 20 customer/admin screens × 3 viewports (desktop-light, tablet-light, mobile-dark): renders, no console errors, no horizontal overflow; theme toggle + persistence + exact brand colours; mobile menu; table search, filter, sort, counter, empty state; `/` shortcut; custom confirm dialog; modal pre-fill; inline validation; toasts; chart; count-up; CSV download; reduced-motion; exact primary-button counts | **117 / 117 passed** (`ui/RESULTS_UI.md`) |
+| Business rules | `php tests/run_tests.php` | code format/normalisation, no plaintext storage, claim success, double claim, other user, inactive code/product, blocked user, batch deactivate, rate limiting, redeem/cancel/refund, DB-level constraints, **12-way and 8-way parallel-process races**, ledger vs balance, automatic secret-key creation (incl. 8 processes at once), importing `database.sql` twice, session idle timeout | **69 / 69 passed** (`RESULTS.md`) |
+| HTTP end-to-end | `php tests/http_test.php` | browser admin setup on a brand-new install (validation, CSRF, once-only, no second admin), `check.php`, auth gating of every page, CSRF (missing/forged), security headers, cookie flags, registration validation, XSS escaping, password hashing, claim flow, SQL-injection-style input, rate-limited sign-in, admin CRUD, one-time code display + replay rejection, CSV export has no plaintext, blocking, activity log | **90 / 90 passed** (`RESULTS_HTTP.md`) |
+| Browser UI | `cd tests/ui && npm i && node ui_test.mjs` | all 20 customer/admin screens plus `check.php` × 3 viewports (desktop-light, tablet-light, mobile-dark): renders, no console errors, no horizontal overflow; theme toggle + persistence + exact brand colours; mobile menu; table search, filter, sort, counter, empty state; `/` shortcut; custom confirm dialog; modal pre-fill; inline validation; toasts; chart; count-up; CSV download; reduced-motion; exact primary-button counts | **120 / 120 passed** (`ui/RESULTS_UI.md`) |
 | Design-token audit | `php tests/css_audit.php` | no colour/shadow/radius/font-weight outside tokens | **passed** |
 
-Mutation check: removing the row locks and balance guard from `redeem_reward()` made 4 race checks fail, so the race tests do detect broken locking.
+Mutation checks: removing the row locks and balance guard from `redeem_reward()` made 4 race checks fail; putting back the old idle-timeout code made the new "brand-new session" test fail. So these tests do detect the bugs they are meant to detect.
 
 ## Manual checks performed
 
@@ -22,6 +22,7 @@ Mutation check: removing the row locks and balance guard from `redeem_reward()` 
 
 ## Not tested (be honest in the demo)
 
+* Apache `.htaccess` behaviour is covered only by the clean-room run described in the next section, not by the automated suites (they use PHP's built-in server).
 * Browsers other than Chromium; Safari and Firefox rendering (`color-mix`, `<dialog>`, `:focus-visible` need reasonably current versions).
 * The real Manrope web font (sandbox had no internet; the system fallback was rendered).
 * HTTPS and the `Secure` cookie flag (tests ran over plain HTTP).
@@ -36,3 +37,7 @@ Mutation check: removing the row locks and balance guard from `redeem_reward()` 
 * Lockout can be triggered against a victim's e-mail (ASSUMPTIONS #21); the guess budget is slightly soft under truly simultaneous attempts (#22).
 * No e-mail verification and no password reset.
 * A code proves possession, not retail purchase.
+
+## Clean-room install check
+
+See the end of `AI_LOG.md` (#12) for the install-from-ZIP run that follows the README exactly.

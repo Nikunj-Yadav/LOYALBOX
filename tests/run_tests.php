@@ -10,8 +10,9 @@ require __DIR__ . '/bootstrap_test.php';
 // Create the test database using the credentials from .env (needs CREATE privilege) or TEST_ADMIN_* env vars.
 $adminDsn = sprintf('mysql:host=%s;port=%s;charset=utf8mb4', env('DB_HOST', '127.0.0.1'), env('DB_PORT', '3306'));
 $root = new PDO($adminDsn, getenv('TEST_ADMIN_USER') ?: env('DB_USER'), getenv('TEST_ADMIN_PASS') ?: env('DB_PASS'), [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-$root->exec('CREATE DATABASE IF NOT EXISTS loyalbox_test CHARACTER SET utf8mb4');
-db()->exec(file_get_contents(ROOT . '/database/schema.sql'));
+$root->exec('DROP DATABASE IF EXISTS loyalbox_test');
+$root->exec('CREATE DATABASE loyalbox_test CHARACTER SET utf8mb4');
+install_schema();
 
 $results = []; $failed = 0;
 function check(string $name, bool $ok, string $detail = ''): void
@@ -59,6 +60,25 @@ check('Stored value is a 64-char HMAC and hint is last 4 chars', strlen($row['co
 check('Hash is keyed (differs from plain SHA-256)', code_hash($codes[0]) !== hash('sha256', $codes[0]));
 $dump = json_encode(fetch_all('SELECT * FROM product_codes'));
 check('No full code appears anywhere in the table dump', !str_contains($dump, $codes[0]) && !str_contains($dump, $codes[5]));
+
+echo "\n== Secret key (pepper) ==\n";
+$tmp = sys_get_temp_dir() . '/lb_pepper_' . bin2hex(random_bytes(4)) . '/secret.key';
+$k1 = code_pepper($tmp); $k2 = code_pepper($tmp);
+check('A secret key file is created automatically (64 hex chars)', is_file($tmp) && preg_match('/^[0-9a-f]{64}$/', $k1) === 1);
+check('The same key is returned on later calls (not regenerated)', $k1 === $k2 && trim((string)file_get_contents($tmp)) === $k1);
+$tmp2 = sys_get_temp_dir() . '/lb_pepper_' . bin2hex(random_bytes(4)) . '/secret.key';
+$startAt = microtime(true) + 1.2; $ps = [];
+for ($i = 0; $i < 8; $i++) { $ps[] = proc_open([PHP_BINARY, __DIR__ . '/worker.php', 'pepper', '0', $tmp2, (string)$startAt], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pp); $pipesAll[] = [$ps[$i], $pp]; }
+$vals = []; foreach ($pipesAll as [$pr, $pp]) { $vals[] = (json_decode(stream_get_contents($pp[1]), true)['value'] ?? 'ERR'); proc_close($pr); }
+check('8 processes creating the key at the same moment all get the SAME key', count(array_unique($vals)) === 1 && strlen($vals[0]) === 64, json_encode(array_unique($vals)));
+
+echo "\n== database.sql ==\n";
+$before = (int)scalar('SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE()');
+q("INSERT INTO users (name,email,password_hash) VALUES ('Keep Me','keep@test.local','x')");
+install_schema();    // importing a second time must not destroy anything
+check('Importing database.sql twice is safe: 11 tables, data kept', $before === 11 && (int)scalar("SELECT COUNT(*) FROM users WHERE email='keep@test.local'") === 1);
+q("DELETE FROM users WHERE email='keep@test.local'");
+check('database.sql contains no DROP statements', stripos((string)file_get_contents(ROOT . '/database.sql'), 'DROP ') === false);
 
 echo "\n== Claiming ==\n";
 $alice = newUser('alice'); $bob = newUser('bob');
@@ -177,6 +197,12 @@ $buyers = []; for ($i = 0; $i < 6; $i++) { $buyers[] = newUser("buyer$i", 10); }
 $res = runParallel(array_map(fn($u) => ['redeem', $u, $last], $buyers));
 check('6 customers racing for the last item: exactly 1 gets it', count(array_filter($res, fn($r) => !empty($r['ok']))) === 1, json_encode($res));
 check('Stock is 0, not negative', (int)scalar('SELECT stock FROM rewards WHERE id=?', [$last]) === 0);
+
+echo "\n== Session timeout ==\n";
+$sess = runParallel([['admin_session', 0, 'none'], ['admin_session', 0, '60'], ['admin_session', 0, '4000']]);
+check('A brand-new session (no timestamp yet) is NOT treated as expired', $sess[0]['ok'] === true, json_encode($sess[0]));
+check('An admin session active 60 s ago is still valid', $sess[1]['ok'] === true);
+check('An admin session idle for 4000 s (> 30 min) is rejected', $sess[2]['ok'] === false);
 
 echo "\n== Ledger integrity ==\n";
 $bad = fetch_all('SELECT u.id, u.points_balance, COALESCE(SUM(t.points),0) s FROM users u LEFT JOIN point_transactions t ON t.user_id=u.id GROUP BY u.id HAVING u.points_balance <> s AND u.id NOT IN (SELECT id FROM users WHERE name IN ("eve","rich") OR name LIKE "buyer%")');

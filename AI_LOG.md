@@ -54,3 +54,17 @@ These did not affect the shipped application.
 **Action:** the AI rendered every page at desktop/tablet/mobile and light/dark in headless Chromium, then looked at screenshots. This found issues the tests could not: tiny chart labels (SVG scaled down), a chart card stretched to the height of its neighbour, a redundant second status filter on the Codes table, wrapped code cells, and Activate+Deactivate buttons both shown for every batch.
 **Fixed:** all of the above.
 **Limit:** the AI only viewed a few screenshots individually; it did not look at every one of the ~60 generated images. Visual quality beyond the checked items is not guaranteed.
+
+### 10. User feedback — the install failed in phpMyAdmin (MISTAKE in the first delivery)
+**Prompt (from the user, with a screenshot):** importing `schema.sql` in phpMyAdmin gave "#1046 - No database selected". Later: "tell me just simple solution", then "see this project that gave me before … in this project I don't get any error" (an earlier project, `visitor-slideshow`, was uploaded for comparison).
+**What went wrong:** the first delivery assumed a terminal and a MySQL admin account. The schema file did not create the database, began with `DROP TABLE` (so importing twice would have wiped data), the first admin had to be created from the command line, and `CODE_PEPPER` had to be generated and pasted by hand. None of that suits a XAMPP/phpMyAdmin user, and I never tested the phpMyAdmin path.
+**Detected:** by the user, not by any test. Comparing with the other project showed what they expected: one importable file that creates its own database, admin creation in the browser, a `check.php` page, defaults that match XAMPP.
+**Fix:** `database.sql` now creates the database and uses `CREATE TABLE IF NOT EXISTS` (no drops); admin setup page; automatic `config/secret.key`; `check.php`; XAMPP defaults; `.htaccess` guards; a friendly "database is not ready" page; README rewritten around XAMPP.
+
+### 11. MISTAKE — brand-new admin was signed straight out (found by a new test)
+**What went wrong:** the idle-timeout code treated a session with no `last_seen` timestamp as expired. After the new browser setup page created the admin and redirected to the dashboard, the next request logged them out. Normal sign-in only worked because the login page happened to set the timestamp first. The same latent flaw was in the customer code.
+**Detected:** the new HTTP test "The admin dashboard opens right after setup" failed (302 to login). The first guess was a test-client problem; printing the redirect target showed it was the application.
+**Fixed:** only apply the timeout when a timestamp exists. Added direct tests for brand-new, 60-second-old and 4000-second-old sessions, and confirmed the new test fails against the old code.
+
+### 12. Clean-room install check
+See the final section of this file once the run below has been recorded.
