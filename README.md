@@ -32,7 +32,7 @@ The file creates the database `loyalbox` with its 11 tables. It is safe to impor
 ### 4. Open the setup check
 Go to <http://localhost/loyalbox/public/check.php>. Every line should say **OK** (the *Admin account* line says "Fix needed" until step 5). If something is wrong, the line tells you how to fix it.
 
-A fresh XAMPP uses MySQL user `root` with an empty password, and LoyalBox is already set up for that, so there is nothing to edit. If you gave MySQL a password, copy `config/config.example.php` to `config/config.local.php` and put it there.
+A fresh XAMPP uses MySQL user `root` with an empty password, and LoyalBox is already set up for that, so there is nothing to edit. If you gave MySQL a password (or the page shows "database is not ready" even though MySQL is running), copy `config/config.example.php` to `config/config.local.php` and put the password there.
 
 ### 5. Create the admin account
 Open <http://localhost/loyalbox/public/admin/>. The first time, it asks you to create the admin (name, e-mail, password of at least 10 characters). This page disappears once an admin exists, so do it before you share the address with anyone.

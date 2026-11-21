@@ -22,7 +22,7 @@ error_reporting(E_ALL);
 set_exception_handler(function (Throwable $e): void {
     error_log('[LoyalBox] ' . get_class($e) . ': ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
     if (!headers_sent()) { http_response_code(500); }
-    $notReady = $e instanceof PDOException && (in_array((int)$e->getCode(), [1044, 1045, 1049, 2002], true) || (int)($e->errorInfo[1] ?? 0) === 1146);
+    $notReady = $e instanceof PDOException && (in_array((int)$e->getCode(), [1044, 1045, 1049, 1130, 1698, 2002], true) || (int)($e->errorInfo[1] ?? 0) === 1146);
     if ($notReady) {
         render_error_page('The database is not ready', 'Start MySQL, import database.sql in phpMyAdmin, then open check.php (in the public folder) to see exactly what is missing.');
     }

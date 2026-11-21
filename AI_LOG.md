@@ -66,5 +66,10 @@ These did not affect the shipped application.
 **Detected:** the new HTTP test "The admin dashboard opens right after setup" failed (302 to login). The first guess was a test-client problem; printing the redirect target showed it was the application.
 **Fixed:** only apply the timeout when a timestamp exists. Added direct tests for brand-new, 60-second-old and 4000-second-old sessions, and confirmed the new test fails against the old code.
 
-### 12. Clean-room install check
-See the final section of this file once the run below has been recorded.
+### 12. Clean-room install check (Apache + MariaDB, following the new README)
+**Action:** the final ZIP was unzipped into Apache's web folder under `/loyalbox/`, with `.htaccess` enabled, no `.env`, MySQL user `root` with an empty password (to imitate XAMPP), and `database.sql` imported **with no database selected, twice** (the phpMyAdmin scenario that failed for the user).
+**Results:** both imports succeeded (11 tables, data kept). `check.php` listed what was missing before the import and showed all tables found after it. Opening `admin/` led to the setup page; creating the admin signed in straight to the dashboard; the setup page then redirected to login. Product creation, code generation (which created `config/secret.key`, 64 characters), customer registration, claim (+25 points) and a second claim of the same code ("already been used") all worked. Apache returned 403 for `config/secret.key`, `database.sql`, `README.md`, `src/config.php`, `tests/`, `scripts/` and `.env.example`, and 404 for `.git`.
+**Two things found by this run:**
+* The first attempt returned HTTP 500 on admin pages. The Apache log showed `1698 Access denied for root@localhost`. The cause was the sandbox's MariaDB (its root account uses socket authentication instead of an empty password), not the application. The sandbox was changed to match XAMPP.
+* It did show a real gap: that kind of database-login error displayed a generic "Something went wrong" instead of the helpful "The database is not ready" page. Error codes 1130 and 1698 were added, and the README now tells users to put a MySQL password in `config/config.local.php`.
+**Not verified:** real XAMPP on Windows or macOS, phpMyAdmin's own import button (the same SQL was imported with the `mysql` command), and a browser pointed at the Apache copy (the browser tests ran against PHP's built-in server).

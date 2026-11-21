@@ -40,4 +40,4 @@ Mutation checks: removing the row locks and balance guard from `redeem_reward()`
 
 ## Clean-room install check
 
-See the end of `AI_LOG.md` (#12) for the install-from-ZIP run that follows the README exactly.
+Done with real Apache (`.htaccess` active), MariaDB, root with an empty password, no `.env`, `database.sql` imported twice with no database selected. Every step passed after one environment fix; details and the two findings are in `AI_LOG.md` #12. Not done: real XAMPP on Windows/macOS and phpMyAdmin's import button itself.
